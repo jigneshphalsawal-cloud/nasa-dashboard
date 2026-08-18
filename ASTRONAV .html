@@ -1,1315 +1,266 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ASTRONAV DASHBOARD - Real-Time Telemetry, Asteroids & Solar Events</title>
+  <title>AstroNav Dashboard</title>
+
   <style>
-    /* design of the dashboard - simple and asthetic ....idk*/
-    :root {
-      --bg-space: #050814;
-      --card-bg: rgba(15, 23, 42, 0.7);
-      --card-border: rgba(255, 255, 255, 0.08);
-      --card-hover-border: rgba(56, 189, 248, 0.5);
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent-cyan: #38bdf8;
-      --accent-orange: #f97316;
-      --accent-green: #22c55e;
-      --accent-purple: #a855f7;
-      --accent-red: #ef4444;
-      --accent-yellow: #eab308;
-      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      --transition-bounce: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-      --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
     body {
-      font-family: var(--font-family);
-      background-color: var(--bg-space);
-      color: var(--text-main);
-      line-height: 1.6;
-      padding-bottom: 60px;
-      overflow-x: hidden;
-    }
-
-    /* Animated Background Glows- used ai  */
-    body::before, body::after {
-      content: '';
-      position: fixed;
-      width: 650px;
-      height: 650px;
-      border-radius: 50%;
-      filter: blur(140px);
-      opacity: 0.15;
-      z-index: -1;
-      animation: floatOrbit 18s ease-in-out infinite alternate;
-    }
-
-    body::before {
-      background: radial-gradient(circle, var(--accent-cyan), transparent 70%);
-      top: -100px;
-      left: -100px;
-    }
-
-    body::after {
-      background: radial-gradient(circle, var(--accent-purple), transparent 70%);
-      bottom: -100px;
-      right: -100px;
-      animation-delay: -9s;
-    }
-
-    body.modal-open {
-      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background: #08111f;
+      color: white;
+      margin: 0;
     }
 
     .container {
-      max-width: 1240px;
-      margin: 0 auto;
-      padding: 24px;
+      width: 90%;
+      max-width: 1000px;
+      margin: auto;
     }
 
-    /* animation */
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(30px) scale(0.96); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    @keyframes floatOrbit {
-      0% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(80px, 40px) scale(1.1); }
-      100% { transform: translate(-40px, 80px) scale(0.95); }
-    }
-
-    @keyframes pulseGlow {
-      0%, 100% { box-shadow: 0 0 6px var(--accent-green), 0 0 12px var(--accent-green); }
-      50% { box-shadow: 0 0 18px var(--accent-green), 0 0 24px var(--accent-green); }
-    }
-
-    @keyframes pulseGlowRed {
-      0%, 100% { box-shadow: 0 0 6px var(--accent-red); }
-      50% { box-shadow: 0 0 16px var(--accent-red); }
-    }
-
-    @keyframes animatedGradient {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    @keyframes loadingSkeleton {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-
-    @keyframes modalFadeIn {
-      from { opacity: 0; transform: scale(0.85) translateY(20px); }
-      to { opacity: 1; transform: scale(1) translateY(0); }
-    }
-
-    @keyframes rippleEffect {
-      0% { width: 0px; height: 0px; opacity: 0.5; }
-      100% { width: 300px; height: 300px; opacity: 0; }
-    }
-
-    @keyframes progressLine {
-      from { width: 0%; }
-      to { width: 100%; }
-    }
-
-    .animate-stagger {
-      animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      opacity: 0;
-    }
-
-    /* glass shine like ios 17 */
-    .glass-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-radius: 16px;
-      padding: 24px;
-      transition: transform 0.2s ease-out, border-color 0.4s ease, box-shadow 0.4s ease;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      transform-style: preserve-3d;
-    }
-
-    .glass-card::before {
-      content: '';
-      position: absolute;
-      inset: -100%;
-      background: linear-gradient(
-        115deg,
-        transparent 40%,
-        rgba(255, 255, 255, 0.08) 45%,
-        rgba(255, 255, 255, 0.18) 50%,
-        transparent 55%
-      );
-      transition: transform 0.8s ease;
-      transform: translateX(-100%);
-      pointer-events: none;
-    }
-
-    .glass-card:hover::before {
-      transform: translateX(100%);
-    }
-
-    .glass-card:hover {
-      border-color: var(--card-hover-border);
-      box-shadow: 0 16px 40px -10px rgba(56, 189, 248, 0.25);
-    }
-
-    /* Dynamic Grid Layouts */
-    .grid-3-col {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 24px;
-      margin-bottom: 48px;
-    }
-
-    /*header and navigation*/
     header {
-      margin-bottom: 36px;
+      text-align: center;
+      padding: 30px;
     }
 
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(30, 41, 59, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 6px 14px;
-      border-radius: 9999px;
-      font-size: 0.8rem;
-      color: var(--accent-cyan);
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      transition: var(--transition-bounce);
+    h1 {
+      color: #38bdf8;
     }
 
-    .status-badge:hover {
-      transform: scale(1.05);
-      border-color: var(--accent-cyan);
-    }
-
-    .pulse-dot {
-      width: 8px;
-      height: 8px;
-      background-color: var(--accent-green);
-      border-radius: 50%;
-      animation: pulseGlow 2s infinite;
-    }
-
-    header h1 {
-      font-size: 3rem;
-      font-weight: 900;
-      margin: 12px 0 6px 0;
-      background: linear-gradient(90deg, #ffffff, #38bdf8, #a855f7, #ffffff);
-      background-size: 300% 300%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: animatedGradient 8s ease infinite;
-    }
-
-    header p {
-      color: var(--text-muted);
-      font-size: 1.05rem;
-    }
-
-    .section-title {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-
-    .section-title h2 {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    /*highlights slideshow  */
-    .slideshow-wrapper {
-      position: relative;
-      border-radius: 20px;
-      overflow: hidden;
-      height: 440px;
-      margin-bottom: 48px;
-      border: 1px solid var(--card-border);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-      cursor: pointer;
-    }
-
-    .progress-bar {
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 4px;
-      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
-      width: 0%;
-      z-index: 20;
-    }
-
-    .progress-bar.active {
-      animation: progressLine 5s linear infinite;
-    }
-
-    .slideshow-track {
-      display: flex;
-      width: 100%;
-      height: 100%;
-      transition: transform 0.7s cubic-bezier(0.25, 1, 0.5, 1);
-    }
-
-    .slide {
-      min-width: 100%;
-      height: 100%;
-      position: relative;
-    }
-
-    .slide img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 8s ease;
-    }
-
-    .slide:hover img {
-      transform: scale(1.08);
-    }
-
-    .slide-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(0deg, rgba(5,8,20,0.95) 0%, rgba(5,8,20,0.4) 50%, transparent 100%);
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding: 36px;
-      transition: transform 0.4s ease;
-    }
-
-    .slide-tag {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--accent-cyan);
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      margin-bottom: 8px;
-      transform: translateY(10px);
-      opacity: 0;
-      transition: var(--transition-smooth);
-    }
-
-    .slide-overlay h3 {
-      font-size: 1.9rem;
-      font-weight: 700;
-      margin-bottom: 10px;
-      color: #ffffff;
-      line-height: 1.3;
-      transform: translateY(15px);
-      opacity: 0;
-      transition: var(--transition-smooth);
-      transition-delay: 0.05s;
-    }
-
-    .slide-overlay p {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      max-width: 750px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      transform: translateY(20px);
-      opacity: 0;
-      transition: var(--transition-smooth);
-      transition-delay: 0.1s;
-    }
-
-    .slide.active .slide-tag,
-    .slide.active .slide-overlay h3,
-    .slide.active .slide-overlay p {
-      transform: translateY(0);
-      opacity: 1;
-    }
-
-    .carousel-btn {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: white;
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      backdrop-filter: blur(8px);
-      transition: var(--transition-bounce);
-      z-index: 10;
-    }
-
-    .carousel-btn:hover {
-      background: var(--accent-cyan);
-      color: #050814;
-      border-color: var(--accent-cyan);
-      transform: translateY(-50%) scale(1.18);
-      box-shadow: 0 0 20px var(--accent-cyan);
-    }
-
-    .carousel-btn.prev { left: 20px; }
-    .carousel-btn.next { right: 20px; }
-
-    .carousel-indicators {
-      position: absolute;
-      bottom: 20px;
-      right: 36px;
-      display: flex;
-      gap: 10px;
-      z-index: 10;
-    }
-
-    .indicator-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.3);
-      cursor: pointer;
-      transition: var(--transition-bounce);
-    }
-
-    .indicator-dot.active {
-      background: var(--accent-cyan);
-      width: 32px;
-      border-radius: 14px;
-      box-shadow: 0 0 10px var(--accent-cyan);
-    }
-
-    /* asteroid flyby section */
-    .asteroid-card {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .asteroid-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .asteroid-name {
-      font-size: 1.2rem;
-      font-weight: 800;
-      color: var(--text-main);
-
-    }
-
-    .hazard-badge {
-      font-size: 0.7rem;
-      padding: 4px 10px;
-      border-radius: 9999px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .hazard-badge.danger {
-      background: rgba(239, 68, 68, 0.2);
-      color: var(--accent-red);
-      border: 1px solid rgba(239, 68, 68, 0.4);
-      animation: pulseGlowRed 2s infinite;
-    }
-
-    .hazard-badge.safe {
-      background: rgba(34, 197, 94, 0.15);
-      color: var(--accent-green);
-      border: 1px solid rgba(34, 197, 94, 0.3);
-    }
-
-    .asteroid-stat-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      background: rgba(5, 8, 20, 0.5);
-      padding: 14px;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.04);
-    }
-
-    .stat-box {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .stat-box span.label {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-
-    .stat-box span.val {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: var(--accent-cyan);
-    }
-
-    /*solar event */
-    .solar-card {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      border-left: 4px solid var(--accent-orange);
-    }
-
-    .solar-tag {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--accent-orange);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .solar-title {
-      font-size: 1.15rem;
-      font-weight: 800;
-      color: #ffffff;
-    }
-
-    .solar-desc {
-      font-size: 0.88rem;
-      color: var(--text-muted);
-      line-height: 1.5;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    /*live news archive and animation?? */
-    .filter-tabs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 24px;
-      overflow-x: auto;
-      padding-bottom: 8px;
-    }
-
-    .filter-btn {
-      position: relative;
-      background: rgba(30, 41, 59, 0.5);
-      border: 1px solid var(--card-border);
-      color: var(--text-muted);
-      padding: 10px 22px;
-      border-radius: 9999px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      overflow: hidden;
-      transition: var(--transition-bounce);
-      white-space: nowrap;
-    }
-
-    .filter-btn:hover {
-      color: var(--text-main);
-      transform: translateY(-2px);
-      border-color: rgba(255, 255, 255, 0.3);
-    }
-
-    .filter-btn.active {
-      background: var(--accent-cyan);
-      color: #050814;
-      border-color: var(--accent-cyan);
-      transform: scale(1.05);
-      box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
-    }
-
-    .ripple {
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.4);
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      animation: rippleEffect 0.6s linear;
-    }
-
-    .news-card {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
-
-    .news-img-holder {
-      width: 100%;
-      height: 190px;
-      border-radius: 12px;
-      overflow: hidden;
-      margin-bottom: 16px;
-      background-color: rgba(255, 255, 255, 0.05);
-    }
-
-    .news-img-holder img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .news-card:hover .news-img-holder img {
-      transform: scale(1.12);
-    }
-
-    .news-meta {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      margin-bottom: 10px;
-    }
-
-    .news-meta .category {
-      color: var(--accent-cyan);
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-
-    .news-card h3 {
-      font-size: 1.15rem;
-      margin-bottom: 10px;
-      line-height: 1.4;
-      color: var(--text-main);
-      transition: color 0.3s ease;
-    }
-
-    .news-card:hover h3 {
-      color: var(--accent-cyan);
-    }
-
-    .news-card p {
-      color: var(--text-muted);
-      font-size: 0.88rem;
-      flex-grow: 1;
-      margin-bottom: 16px;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .read-more-lbl {
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: var(--accent-cyan);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: transform 0.3s ease;
-    }
-
-    .news-card:hover .read-more-lbl {
-      transform: translateX(6px);
-    }
-
-    .skeleton {
-      background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
-      background-size: 200% 100%;
-      animation: loadingSkeleton 1.5s infinite;
+    .card {
+      background: #122033;
+      border: 1px solid #33475c;
+      padding: 15px;
+      margin-bottom: 15px;
       border-radius: 8px;
     }
 
-    /* modal dialog */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(5, 8, 20, 0.85);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
     }
 
-    .modal-overlay.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .modal-card {
-      background: #0f172a;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 20px;
-      max-width: 800px;
+    .card img {
       width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
-      position: relative;
-      transform: scale(0.85) translateY(20px);
-      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    .modal-overlay.active .modal-card {
-      transform: scale(1) translateY(0);
-    }
-
-    .modal-close-btn {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      background: rgba(15, 23, 42, 0.7);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: white;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      font-size: 1.2rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-      transition: var(--transition-bounce);
-    }
-
-    .modal-close-btn:hover {
-      background: var(--accent-orange);
-      border-color: var(--accent-orange);
-      transform: rotate(90deg) scale(1.15);
-    }
-
-    .modal-img-holder {
-      width: 100%;
-      max-height: 400px;
-      overflow: hidden;
-      background: #050814;
-    }
-
-    .modal-img-holder img {
-      width: 100%;
-      height: 100%;
+      max-height: 350px;
       object-fit: cover;
     }
 
-    .modal-body {
-      padding: 32px;
+    button {
+      padding: 8px 12px;
+      margin: 3px;
+      background: #122033;
+      color: white;
+      border: 1px solid #38bdf8;
+      cursor: pointer;
     }
 
-    .modal-meta {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 12px;
-      font-size: 0.85rem;
+    button:hover {
+      background: #38bdf8;
+      color: black;
     }
 
-    .modal-title {
-      font-size: 1.8rem;
-      font-weight: 800;
-      margin-bottom: 20px;
-      line-height: 1.3;
-      color: var(--text-main);
-    }
-
-    .modal-description {
-      color: var(--text-muted);
-      font-size: 1.05rem;
-      line-height: 1.8;
-      margin-bottom: 28px;
-      white-space: pre-line;
-    }
-
-    .modal-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--accent-cyan);
-      color: #050814;
-      font-weight: 700;
-      padding: 12px 24px;
-      border-radius: 9999px;
-      text-decoration: none;
-      transition: var(--transition-bounce);
-    }
-
-    .modal-btn:hover {
-      transform: scale(1.08) translateY(-2px);
-      box-shadow: 0 0 25px rgba(56, 189, 248, 0.5);
+    .small {
+      color: #aaa;
     }
 
     footer {
       text-align: center;
-      margin-top: 60px;
-      padding-top: 24px;
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-      font-size: 0.85rem;
-      color: var(--text-muted);
+      padding: 30px;
+      color: #999;
     }
   </style>
 </head>
+
 <body>
 
   <div class="container">
-    <!-- HEADER -->
-    <header class="animate-stagger" style="animation-delay: 0.1s;">
-      <div class="status-badge">
-        <span class="pulse-dot"></span>
-        Direct NASA Telemetry Active
-      </div>
+
+    <header>
       <h1>ASTRONAV DASHBOARD</h1>
-      <p>Real-time space discoveries, close asteroid tracking, &amp; space weather intelligence.</p>
+      <p>Simple NASA space information dashboard</p>
     </header>
 
-    <!-- HIGHLIGHTS SLIDESHOW -->
-    <section class="animate-stagger" style="animation-delay: 0.2s;">
-      <div class="section-title">
-        <h2>✨ Mission Highlights</h2>
-        <span style="font-size: 0.85rem; color: var(--text-muted);">Hover to pause • Click to expand</span>
-      </div>
-      <div class="slideshow-wrapper" id="slideshow-container">
-        <div class="progress-bar active" id="slideshowProgressBar"></div>
-        <button class="carousel-btn prev" id="prevSlideBtn" aria-label="Previous Slide">❮</button>
-        <button class="carousel-btn next" id="nextSlideBtn" aria-label="Next Slide">❯</button>
-        <div class="slideshow-track" id="slideshowTrack">
-          <!-- Dynamically Loaded Slides -->
-        </div>
-        <div class="carousel-indicators" id="slideshowIndicators">
-          <!-- Dynamic Dots -->
-        </div>
-      </div>
-    </section>
+    <h2>NASA Picture of the Day</h2>
 
-    <!-- NEW SECTION 1: ASTEROID CLOSE APPROACHES -->
-    <section class="animate-stagger" style="animation-delay: 0.3s;">
-      <div class="section-title">
-        <h2>☄️ Live Asteroid Close Approaches (NEO Feed)</h2>
-        <span style="font-size: 0.85rem; color: var(--accent-cyan);">Real-time Trajectory Telemetry</span>
-      </div>
-      <div class="grid-3-col" id="asteroidGrid">
-        <!-- Dynamically Loaded Asteroid Cards -->
-      </div>
-    </section>
-
-    <!-- NEW SECTION 2: SOLAR EVENTS & SPACE WEATHER -->
-    <section class="animate-stagger" style="animation-delay: 0.4s;">
-      <div class="section-title">
-        <h2>☀️ Solar Activity &amp; Space Weather (DONKI)</h2>
-        <span style="font-size: 0.85rem; color: var(--accent-orange);">Coronal Mass Ejections &amp; Solar Flares</span>
-      </div>
-      <div class="grid-3-col" id="solarGrid">
-        <!-- Dynamically Loaded Solar Cards -->
-      </div>
-    </section>
-
-    <!-- LIVE NEWS FEED -->
-    <section class="animate-stagger" style="animation-delay: 0.5s;">
-      <div class="section-title">
-        <h2>📰 Live NASA News Stream</h2>
-      </div>
-
-      <div class="filter-tabs">
-        <button class="filter-btn active" data-category="latest">Latest News (2025–2026)</button>
-        <button class="filter-btn" data-category="artemis">Artemis</button>
-        <button class="filter-btn" data-category="mars">Mars Rovers</button>
-        <button class="filter-btn" data-category="webb">Webb Telescope</button>
-      </div>
-
-      <div class="grid-3-col" id="newsGrid">
-       
-      </div>
-    </section>
-
-    <!-- FOOTER -->
-    <footer>
-      POWERED BY NASA NeoWs, DONKI &amp; REST APIS
-    </footer>
-  </div>
-
-  <!-- FULLSCREEN DETAILING -->
-  <div class="modal-overlay" id="newsModalOverlay">
-    <div class="modal-card">
-      <button class="modal-close-btn" id="modalCloseBtn">✕</button>
-      <div class="modal-img-holder">
-        <img id="modalImage" src="" alt="Detail Graphic" />
-      </div>
-      <div class="modal-body">
-        <div class="modal-meta">
-          <span class="status-badge" id="modalCategory">NASA Science</span>
-          <span style="color: var(--text-muted);" id="modalDate">Timestamp</span>
-        </div>
-        <h2 class="modal-title" id="modalTitle">Article Title</h2>
-        <p class="modal-description" id="modalDescription">Detailed log provided by NASA telemetric feed...</p>
-        <a id="modalSourceBtn" href="#" target="_blank" rel="noopener noreferrer" class="modal-btn">
-          Open Official Source ➔
-        </a>
-      </div>
+    <div class="card" id="picture">
+      Loading picture...
     </div>
+
+
+    <h2>Asteroids Near Earth</h2>
+
+    <div class="grid" id="asteroids">
+      Loading asteroids...
+    </div>
+
+
+    <h2>NASA News</h2>
+
+    <button onclick="getNews('space')">Space</button>
+    <button onclick="getNews('mars')">Mars</button>
+    <button onclick="getNews('artemis')">Artemis</button>
+
+    <div class="grid" id="news">
+      Loading news...
+    </div>
+
   </div>
+
+  <footer>
+    Made by Jignesh Phalsawal [using NASA APIs]
+  </footer>
+
 
   <script>
-    /*Integration*/
 
-    const CONFIG = {
-      apiKey: 'uKDQ5WDDtwZdqbmbr0t6HggLZY5WblDkZDhsocxQ',
-      autoSlideInterval: 5000
-    };
+    // NASA API key
+    var apiKey = "uKDQ5WDDtwZdqbmbr0t6HggLZY5WblDkZDhsocxQ";
 
-    const state = {
-      slides: [],
-      currentSlideIndex: 0,
-      slideshowTimer: null,
-      currentArticles: [],
-      asteroids: [],
-      solarEvents: []
-    };
 
-    function filterUniqueItems(items, keyExtractor) {
-      const seen = new Set();
-      return items.filter(item => {
-        const key = keyExtractor(item);
-        if (!key || seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-    }
+    // -------------------------
+    // NASA Picture of the Day
+    // -------------------------
 
-    /* slideshow */
-    async function initSlideshow() {
-      const track = document.getElementById('slideshowTrack');
+    fetch("https://api.nasa.gov/planetary/apod?api_key=" + apiKey)
+      .then(function(response) {
+        return response.json();
+      })
+      .then(function(data) {
 
-      try {
-        const response = await fetch(`https://api.nasa.gov/planetary/apod?api_key=${CONFIG.apiKey}&count=10`);
-        const items = await response.json();
+        document.getElementById("picture").innerHTML =
+          "<h3>" + data.title + "</h3>" +
+          "<p class='small'>" + data.date + "</p>" +
+          "<img src='" + data.url + "'>" +
+          "<p>" + data.explanation + "</p>";
 
-        const validImages = items.filter(item => item.media_type === 'image' && item.url);
-        state.slides = filterUniqueItems(validImages, item => item.title.trim()).slice(0, 5);
+      })
+      .catch(function() {
 
-        renderSlides();
-        startSlideshowAutoPlay();
-      } catch (err) {
-        console.error('Slideshow Fetch Error:', err);
-        track.innerHTML = `<div class="slide"><div class="slide-overlay"><h3>Telemetry Data Unavailable</h3></div></div>`;
-      }
-    }
+        document.getElementById("picture").innerHTML =
+          "Picture could not be loaded.";
 
-    function renderSlides() {
-      const track = document.getElementById('slideshowTrack');
-      const indicators = document.getElementById('slideshowIndicators');
-
-      track.innerHTML = state.slides.map((slide, idx) => `
-        <div class="slide ${idx === 0 ? 'active' : ''}" onclick="openModalForSlide(${idx})">
-          <img src="${slide.url}" alt="${slide.title}" />
-          <div class="slide-overlay">
-            <div class="slide-tag">NASA APOD HIGHLIGHT • ${slide.date}</div>
-            <h3>${slide.title}</h3>
-            <p>${slide.explanation}</p>
-          </div>
-        </div>
-      `).join('');
-
-      indicators.innerHTML = state.slides.map((_, idx) => `
-        <div class="indicator-dot ${idx === 0 ? 'active' : ''}" onclick="event.stopPropagation(); goToSlide(${idx})"></div>
-      `).join('');
-    }
-
-    function updateSlideshowPosition() {
-      const track = document.getElementById('slideshowTrack');
-      track.style.transform = `translateX(-${state.currentSlideIndex * 100}%)`;
-
-      const slides = document.querySelectorAll('.slide');
-      slides.forEach((slide, idx) => {
-        slide.classList.toggle('active', idx === state.currentSlideIndex);
       });
 
-      const dots = document.querySelectorAll('.indicator-dot');
-      dots.forEach((dot, idx) => {
-        dot.classList.toggle('active', idx === state.currentSlideIndex);
+
+    // -------------------------
+    // Asteroid information
+    // -------------------------
+
+    var today = new Date().toISOString().split("T")[0];
+
+    var asteroidURL =
+      "https://api.nasa.gov/neo/rest/v1/feed" +
+      "?start_date=" + today +
+      "&end_date=" + today +
+      "&api_key=" + apiKey;
+
+    fetch(asteroidURL)
+      .then(function(response) {
+        return response.json();
+      })
+      .then(function(data) {
+
+        var asteroids = data.near_earth_objects[today];
+        var box = document.getElementById("asteroids");
+
+        box.innerHTML = "";
+
+        for (var i = 0; i < 6 && i < asteroids.length; i++) {
+
+          var asteroid = asteroids[i];
+
+          var name = asteroid.name;
+
+          var diameter = Math.round(
+            asteroid.estimated_diameter.meters.estimated_diameter_min
+          );
+
+          var speed = Math.round(
+            asteroid.close_approach_data[0]
+              .relative_velocity.kilometers_per_hour
+          );
+
+          var distance = Math.round(
+            asteroid.close_approach_data[0]
+              .miss_distance.kilometers
+          );
+
+          box.innerHTML +=
+            "<div class='card'>" +
+            "<h3>" + name + "</h3>" +
+            "<p>Diameter: " + diameter + " meters</p>" +
+            "<p>Speed: " + speed + " km/h</p>" +
+            "<p>Distance: " + distance + " km</p>" +
+            "</div>";
+        }
+
+      })
+      .catch(function() {
+
+        document.getElementById("asteroids").innerHTML =
+          "Asteroid information could not be loaded.";
+
       });
 
-      resetProgressBar();
-    }
 
-    function resetProgressBar() {
-      const bar = document.getElementById('slideshowProgressBar');
-      bar.classList.remove('active');
-      void bar.offsetWidth;
-      bar.classList.add('active');
-    }
+    // -------------------------
+    // NASA News
+    // -------------------------
 
-    function nextSlide() {
-      if (state.slides.length === 0) return;
-      state.currentSlideIndex = (state.currentSlideIndex + 1) % state.slides.length;
-      updateSlideshowPosition();
-    }
+    function getNews(topic) {
 
-    function prevSlide() {
-      if (state.slides.length === 0) return;
-      state.currentSlideIndex = (state.currentSlideIndex - 1 + state.slides.length) % state.slides.length;
-      updateSlideshowPosition();
-    }
+      var newsURL =
+        "https://images-api.nasa.gov/search?q=" +
+        topic +
+        "&media_type=image";
 
-    function goToSlide(index) {
-      state.currentSlideIndex = index;
-      updateSlideshowPosition();
-      startSlideshowAutoPlay();
-    }
+      fetch(newsURL)
+        .then(function(response) {
+          return response.json();
+        })
+        .then(function(data) {
 
-    function startSlideshowAutoPlay() {
-      stopSlideshowAutoPlay();
-      resetProgressBar();
-      state.slideshowTimer = setInterval(nextSlide, CONFIG.autoSlideInterval);
-    }
+          var news = data.collection.items;
+          var box = document.getElementById("news");
 
-    function stopSlideshowAutoPlay() {
-      if (state.slideshowTimer) clearInterval(state.slideshowTimer);
-      document.getElementById('slideshowProgressBar').classList.remove('active');
-    }
+          box.innerHTML = "";
 
-    /* asteroid api */
-    async function fetchAsteroids() {
-      const grid = document.getElementById('asteroidGrid');
-      grid.innerHTML = Array(3).fill(0).map(() => `
-        <div class="glass-card asteroid-card">
-          <div class="skeleton" style="height: 24px; margin-bottom: 10px;"></div>
-          <div class="skeleton" style="height: 80px;"></div>
-        </div>
-      `).join('');
+          for (var i = 0; i < 6 && i < news.length; i++) {
 
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        const res = await fetch(`https://api.nasa.gov/neo/rest/v1/feed?start_date=${today}&end_date=${today}&api_key=${CONFIG.apiKey}`);
-        const data = await res.json();
-        
-        const rawList = data.near_earth_objects[today] || [];
-        state.asteroids = rawList.slice(0, 3).map(ast => {
-          const approach = ast.close_approach_data[0];
-          return {
-            name: ast.name.replace('(', '').replace(')', ''),
-            diameterMin: Math.round(ast.estimated_diameter.meters.estimated_diameter_min),
-            diameterMax: Math.round(ast.estimated_diameter.meters.estimated_diameter_max),
-            velocity: Math.round(approach.relative_velocity.kilometers_per_hour),
-            missDistance: Math.round(approach.miss_distance.kilometers),
-            isHazardous: ast.is_potentially_hazardous_asteroid,
-            url: ast.nasa_jpl_url
-          };
+            var item = news[i];
+            var info = item.data[0];
+
+            var image = "";
+
+            if (item.links) {
+              image = item.links[0].href;
+            }
+
+            box.innerHTML +=
+              "<div class='card'>" +
+              "<h3>" + info.title + "</h3>" +
+              "<p>" +
+              (info.description || "No description available.") +
+              "</p>" +
+              "<img src='" + image + "'>" +
+              "</div>";
+          }
+
+        })
+        .catch(function() {
+
+          document.getElementById("news").innerHTML =
+            "News could not be loaded.";
+
         });
-
-        renderAsteroids();
-      } catch (err) {
-        console.error('Asteroid API Error:', err);
-        grid.innerHTML = `<p style="color: var(--text-muted);">Failed to load asteroid telemetry.</p>`;
-      }
     }
 
-    function renderAsteroids() {
-      const grid = document.getElementById('asteroidGrid');
-      grid.innerHTML = state.asteroids.map((ast, idx) => `
-        <article 
-          class="glass-card asteroid-card animate-stagger" 
-          style="animation-delay: ${0.1 * idx}s"
-          onclick="window.open('${ast.url}', '_blank')"
-        >
-          <div class="asteroid-header">
-            <span class="asteroid-name">☄️ ${ast.name}</span>
-            <span class="hazard-badge ${ast.isHazardous ? 'danger' : 'safe'}">
-              ${ast.isHazardous ? '⚠️ Hazardous' : '✓ Nominal'}
-            </span>
-          </div>
-          <div class="asteroid-stat-grid">
-            <div class="stat-box">
-              <span class="label">Est. Diameter</span>
-              <span class="val">${ast.diameterMin}–${ast.diameterMax} m</span>
-            </div>
-            <div class="stat-box">
-              <span class="label">Velocity</span>
-              <span class="val">${Number(ast.velocity).toLocaleString()} km/h</span>
-            </div>
-            <div class="stat-box" style="grid-column: span 2;">
-              <span class="label">Miss Distance (Earth)</span>
-              <span class="val">${Number(ast.missDistance).toLocaleString()} km</span>
-            </div>
-          </div>
-          <div class="read-more-lbl" style="font-size: 0.78rem;">
-            Inspect Orbital Telemetry ➔
-          </div>
-        </article>
-      `).join('');
-      init3DTiltEffect();
-    }
 
-    /* solar event api */
-    async function fetchSolarEvents() {
-      const grid = document.getElementById('solarGrid');
-      grid.innerHTML = Array(3).fill(0).map(() => `
-        <div class="glass-card solar-card">
-          <div class="skeleton" style="height: 24px; margin-bottom: 10px;"></div>
-          <div class="skeleton" style="height: 60px;"></div>
-        </div>
-      `).join('');
+    // Load space news when the page opens
+    getNews("space");
 
-      try {
-        const res = await fetch(`https://api.nasa.gov/DONKI/CME?api_key=${CONFIG.apiKey}`);
-        const data = await res.json();
-        
-        state.solarEvents = (data || []).slice(0, 3).map(cme => {
-          const analysis = cme.cmeAnalyses ? cme.cmeAnalyses[0] : null;
-          return {
-            title: `Coronal Mass Ejection (CME)`,
-            startTime: new Date(cme.startTime).toLocaleString(),
-            note: cme.note || 'Plasma release detected from active solar region.',
-            speed: analysis ? `${analysis.speed} km/s` : 'Analyzing...',
-            type: analysis ? analysis.type : 'Standard Payload',
-            url: cme.link
-          };
-        });
-
-        renderSolarEvents();
-      } catch (err) {
-        console.error('Solar API Error:', err);
-        grid.innerHTML = `<p style="color: var(--text-muted);">Failed to retrieve solar weather events.</p>`;
-      }
-    }
-
-    function renderSolarEvents() {
-      const grid = document.getElementById('solarGrid');
-      grid.innerHTML = state.solarEvents.map((solar, idx) => `
-        <article 
-          class="glass-card solar-card animate-stagger" 
-          style="animation-delay: ${0.1 * idx}s"
-          onclick="window.open('${solar.url}', '_blank')"
-        >
-          <div class="solar-tag">SOLAR MONITOR • ${solar.startTime}</div>
-          <div class="solar-title">☀️ ${solar.title}</div>
-          <p class="solar-desc">${solar.note}</p>
-          <div class="asteroid-stat-grid">
-            <div class="stat-box">
-              <span class="label">Ejection Speed</span>
-              <span class="val" style="color: var(--accent-orange);">${solar.speed}</span>
-            </div>
-            <div class="stat-box">
-              <span class="label">Plasma Type</span>
-              <span class="val" style="color: var(--accent-orange);">${solar.type}</span>
-            </div>
-          </div>
-        </article>
-      `).join('');
-      init3DTiltEffect();
-    }
-
-    /*live news feed*/
-    async function fetchLatestNews(topic = 'latest') {
-      const grid = document.getElementById('newsGrid');
-
-      grid.innerHTML = Array(6).fill(0).map(() => `
-        <div class="glass-card news-card">
-          <div class="news-img-holder skeleton"></div>
-          <div class="skeleton" style="height: 20px; margin-bottom: 10px;"></div>
-          <div class="skeleton" style="height: 60px;"></div>
-        </div>
-      `).join('');
-
-      try {
-        let queryKeyword = topic === 'latest' ? 'space station' : topic;
-        const apiUrl = `https://images-api.nasa.gov/search?q=${queryKeyword}&media_type=image&year_start=2025`;
-        
-        const res = await fetch(apiUrl);
-        const data = await res.json();
-
-        const rawArticles = data.collection.items.map(item => {
-          const info = item.data[0];
-          return {
-            title: info.title,
-            description: info.description || 'No detailed log provided by mission control.',
-            date: new Date(info.date_created).toLocaleDateString(),
-            rawDate: new Date(info.date_created),
-            image: item.links ? item.links[0].href : '',
-            category: topic.toUpperCase()
-          };
-        });
-
-        state.currentArticles = filterUniqueItems(rawArticles, art => art.title.trim().toLowerCase())
-          .sort((a, b) => b.rawDate - a.rawDate)
-          .slice(0, 6);
-
-        renderNews();
-      } catch (err) {
-        console.error('API Fetch Error:', err);
-        grid.innerHTML = `<p style="color: var(--text-muted);">Failed to retrieve live stream from NASA endpoints.</p>`;
-      }
-    }
-
-    function renderNews() {
-      const grid = document.getElementById('newsGrid');
-      grid.innerHTML = state.currentArticles.map((art, idx) => `
-        <article 
-          class="glass-card news-card animate-stagger" 
-          style="animation-delay: ${0.08 * idx}s"
-          onclick="openModalForArticle(${idx})"
-        >
-          <div class="news-img-holder">
-            <img src="${art.image}" alt="${art.title}" loading="lazy" />
-          </div>
-          <div class="news-meta">
-            <span class="category">${art.category}</span>
-            <span>${art.date}</span>
-          </div>
-          <h3>${art.title}</h3>
-          <p>${art.description}</p>
-          <div class="read-more-lbl">
-            Read Full Segment ➔
-          </div>
-        </article>
-      `).join('');
-
-      init3DTiltEffect();
-    }
-
-    /* ai animations */
-    function init3DTiltEffect() {
-      const cards = document.querySelectorAll('.glass-card');
-
-      cards.forEach(card => {
-        card.addEventListener('mousemove', (e) => {
-          const rect = card.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-
-          const centerX = rect.width / 2;
-          const centerY = rect.height / 2;
-
-          const rotateX = (y - centerY) / 18;
-          const rotateY = (centerX - x) / 18;
-
-          card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
-        });
-
-        card.addEventListener('mouseleave', () => {
-          card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)`;
-        });
-      });
-    }
-
-    function createRipple(event) {
-      const button = event.currentTarget;
-      const circle = document.createElement('span');
-      const diameter = Math.max(button.clientWidth, button.clientHeight);
-
-      const rect = button.getBoundingClientRect();
-      circle.style.width = circle.style.height = `${diameter}px`;
-      circle.style.left = `${event.clientX - rect.left}px`;
-      circle.style.top = `${event.clientY - rect.top}px`;
-      circle.classList.add('ripple');
-
-      const existingRipple = button.querySelector('.ripple');
-      if (existingRipple) existingRipple.remove();
-
-      button.appendChild(circle);
-    }
-
-    /* handlers*/
-    function openModal(data) {
-      document.getElementById('modalImage').src = data.image;
-      document.getElementById('modalTitle').innerText = data.title;
-      document.getElementById('modalDescription').innerText = data.description;
-      document.getElementById('modalDate').innerText = data.date;
-      document.getElementById('modalCategory').innerText = data.category;
-      document.getElementById('modalSourceBtn').href = data.image;
-
-      const overlay = document.getElementById('newsModalOverlay');
-      overlay.classList.add('active');
-      document.body.classList.add('modal-open');
-    }
-
-    function closeModal() {
-      const overlay = document.getElementById('newsModalOverlay');
-      overlay.classList.remove('active');
-      document.body.classList.remove('modal-open');
-    }
-
-    function openModalForArticle(index) {
-      if (state.currentArticles[index]) {
-        openModal(state.currentArticles[index]);
-      }
-    }
-
-    function openModalForSlide(index) {
-      const slide = state.slides[index];
-      if (slide) {
-        openModal({
-          title: slide.title,
-          description: slide.explanation,
-          date: slide.date,
-          image: slide.hdurl || slide.url,
-          category: 'APOD HIGHLIGHT'
-        });
-      }
-    }
-
-    /* initialization and event listeners */
-    document.addEventListener('DOMContentLoaded', () => {
-      initSlideshow();
-      fetchAsteroids();
-      fetchSolarEvents();
-      fetchLatestNews('latest');
-
-      document.getElementById('nextSlideBtn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        nextSlide();
-        startSlideshowAutoPlay();
-      });
-      document.getElementById('prevSlideBtn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        prevSlide();
-        startSlideshowAutoPlay();
-      });
-
-      const wrapper = document.getElementById('slideshow-container');
-      wrapper.addEventListener('mouseenter', stopSlideshowAutoPlay);
-      wrapper.addEventListener('mouseleave', startSlideshowAutoPlay);
-
-      const buttons = document.querySelectorAll('.filter-btn');
-      buttons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          createRipple(e);
-          buttons.forEach(b => b.classList.remove('active'));
-          e.currentTarget.classList.add('active');
-          const cat = e.currentTarget.getAttribute('data-category');
-          fetchLatestNews(cat);
-        });
-      });
-
-      document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
-      document.getElementById('newsModalOverlay').addEventListener('click', (e) => {
-        if (e.target.id === 'newsModalOverlay') closeModal();
-      });
-
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeModal();
-      });
-    });
   </script>
+
 </body>
 </html>
