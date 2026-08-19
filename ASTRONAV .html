@@ -9,6 +9,7 @@
       background: #08111f;
       color: white;
       margin: auto ;
+      animation: fadeIn 0.8s ease-in-out;
     }
 
     .container {
@@ -20,6 +21,7 @@
     header {
       text-align: center;
       padding: 50px;
+      animation: slideDown 0.6s ease-out;
     }
 
     h1 {
@@ -32,6 +34,7 @@
       padding: 15px;
       margin-bottom: 15px;
       border-radius: 8px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
     }
 
     .grid {
@@ -44,20 +47,23 @@
       width: 100%;
       max-height: 350px;
       object-fit: cover;
+      transition: transform 0.3s ease;
     }
 
     button {
-      padding: 12px 12px;
-      margin: 2px;
+      
       background: #122033;
       color: white;
       border: 1px solid #38bdf8;
       cursor: pointer;
+      transition: all 0.25s ease-in-out;
     }
 
     button:hover {
       background: #38bdf8;
+      padding: 5px;
       color: black;
+      border:1px solid #38bdf8;
     }
 
     .small {
@@ -120,7 +126,7 @@
 
    // pic of the day
 
-    fetch("https://api.nasa.gov/planetary/apod?api_key=" + apiKey)
+    fetch("https://api.nasa.gov/planetary/apod?api_key=" + apiKey + "&thumbs=true")
       
     .then(function(response) {
         return response.json();
@@ -128,18 +134,26 @@
 
 
       .then(function(data) {
+        var mediaHtml = "";
+
+                // Determine if we have a valid image or thumbnail to display(to reject videos),because api cant run videos well
+    if (data.media_type === "image") {
+      mediaHtml = "<img src='" + data.url + "'>";
+    }else  {
+      mediaHtml = "<p class='small'><i>[No image available for this article sorry<3]</i></p>";
+    }
 
         document.getElementById("picture").innerHTML =
          
         "<h3>" + data.title + "</h3>" +
 
-          "<p class='small'>" + data.date + "</p>" +
+          "<p class='small'>" + data.date + "</p>" + mediaHtml +
 
-          "<img src='" + data.url + "'>" +
+          
 
           "<p>" + data.explanation + "</p>";
 
-      })
+      });
       
 
 
@@ -167,7 +181,8 @@
 
         box.innerHTML = "";
 
-        for (var i = 0; i < 6 && i < asteroids.length; i++) {
+       // to limit the number of asteroids displayed to 6
+       for (var i = 0; i < 6 && i < asteroids.length; i++) {
 
           var asteroid = asteroids[i];
 
@@ -193,6 +208,8 @@
             "<p>Diameter: " + diameter + " meters</p>" +
             "<p>Speed: " + speed + " km/h</p>" +
             "<p>Distance: " + distance + " km</p>" +
+            
+            
             "</div>";
         }
 
@@ -205,7 +222,7 @@
       });
 
 
-    // nasa news 
+    // nasa news
 
     function getNews(topic) {
 
@@ -223,40 +240,36 @@
           var news = data.collection.items;
           var box = document.getElementById("news");
 
-          box.innerHTML = "";
+          
 
+          box.innerHTML = "";
+     // to limit the number of news items displayed to 6
           for (var i = 0; i < 6 && i < news.length; i++) {
 
             var item = news[i];
             var info = item.data[0];
 
             var image = "";
-
+          //to Check if the item has links and use the first link as the image source
             if (item.links) {
               image = item.links[0].href;
             }
 
             box.innerHTML +=
-              "<div class='card'>" +
+              "<div class='card'>" +  
               "<h3>" + info.title + "</h3>" +
-              "<p>" +
-              (info.description || "No description available.") +
-              "</p>" +
-              "<img src='" + image + "'>" +
+              "<p>" + (info.description || "No description ") +
+              "</p>" + "<img src='" + image + "'>" +
               "</div>";
           }
 
         })
-        .catch(function() {
+        
 
-          document.getElementById("news").innerHTML =
-            "News could not be loaded.";
-
-        });
-    }
+        };
 
 
-    // Load space news when the page opens
+    // load  news when the page opens up
     getNews("space");
 
   
