@@ -8,7 +8,7 @@
       font-family: Arial, sans-serif;
       background: #08111f;
       color: white;
-      margin: 0;
+      margin: auto ;
     }
 
     .container {
@@ -19,7 +19,7 @@
 
     header {
       text-align: center;
-      padding: 30px;
+      padding: 50px;
     }
 
     h1 {
@@ -47,8 +47,8 @@
     }
 
     button {
-      padding: 8px 12px;
-      margin: 3px;
+      padding: 12px 12px;
+      margin: 2px;
       background: #122033;
       color: white;
       border: 1px solid #38bdf8;
@@ -64,7 +64,7 @@
       color: #aaa;
     }
 
-    footer {
+    footer{
       text-align: center;
       padding: 30px;
       color: #999;
@@ -114,54 +114,55 @@
 
   <script>
 
-    // NASA API key
+    //  api key by official nasa api key generator
     var apiKey = "uKDQ5WDDtwZdqbmbr0t6HggLZY5WblDkZDhsocxQ";
 
 
-    // -------------------------
-    // NASA Picture of the Day
-    // -------------------------
+   // pic of the day
 
     fetch("https://api.nasa.gov/planetary/apod?api_key=" + apiKey)
-      .then(function(response) {
+      
+    .then(function(response) {
         return response.json();
       })
+
+
       .then(function(data) {
 
         document.getElementById("picture").innerHTML =
-          "<h3>" + data.title + "</h3>" +
+         
+        "<h3>" + data.title + "</h3>" +
+
           "<p class='small'>" + data.date + "</p>" +
+
           "<img src='" + data.url + "'>" +
+
           "<p>" + data.explanation + "</p>";
 
       })
-      .catch(function() {
-
-        document.getElementById("picture").innerHTML =
-          "Picture could not be loaded.";
-
-      });
+      
 
 
-    // -------------------------
-    // Asteroid information
-    // -------------------------
+    // asteroids near earth
 
     var today = new Date().toISOString().split("T")[0];
 
-    var asteroidURL =
+    var asteroidlocation =
       "https://api.nasa.gov/neo/rest/v1/feed" +
       "?start_date=" + today +
       "&end_date=" + today +
       "&api_key=" + apiKey;
 
-    fetch(asteroidURL)
+   
+   
+      fetch(asteroidlocation)
       .then(function(response) {
         return response.json();
       })
       .then(function(data) {
 
         var asteroids = data.near_earth_objects[today];
+
         var box = document.getElementById("asteroids");
 
         box.innerHTML = "";
@@ -204,18 +205,16 @@
       });
 
 
-    // -------------------------
-    // NASA News
-    // -------------------------
+    // nasa news 
 
     function getNews(topic) {
 
-      var newsURL =
+      var news =
         "https://images-api.nasa.gov/search?q=" +
         topic +
         "&media_type=image";
 
-      fetch(newsURL)
+      fetch(news)
         .then(function(response) {
           return response.json();
         })
@@ -260,7 +259,9 @@
     // Load space news when the page opens
     getNews("space");
 
+  
   </script>
+
 
 </body>
 </html>
