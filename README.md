@@ -1,4 +1,4 @@
-# 🚀 AstroNav Dashboard 🚀
+# 🚀 Astronav Dashboard 🚀
 
 A lightweight, web dashboard which displays real-time space data using official NASA APIs.
 
